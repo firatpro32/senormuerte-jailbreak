@@ -287,7 +287,6 @@ body:not(.authenticated) .wrap,body:not(.authenticated) .sidebar,body:not(.authe
   <button class="side-link" data-view="store" onclick="openView('store',this)">🛒 Mağaza<small>Yetki ve coin paketleri</small></button>
   <button class="side-link" data-view="support" onclick="openView('support',this)">✉ Şikayet & Öneri<small>Görüşlerini bize ilet</small></button>
   <button class="side-link" data-view="forum" onclick="openView('forum',this)">▤ Forum<small>Konular, sorular ve yorumlar</small></button>
-  <button class="side-link" data-view="profiles" onclick="openView('profiles',this)">♙ Üyeler<small>Topluluk üyelerini görüntüle</small></button>
   <button class="side-link" onclick="openSection('server')">▣ Sunucu Bilgileri<small>Sunucu IP'si ve canlı durum</small></button>
   <button class="side-link" data-view="players" onclick="openView('players',this)">⚖ Oyuncu Kuralları<small>Oyuncuların uyması gereken kurallar</small></button>
   <button class="side-link" data-view="admins" onclick="openView('admins',this)">★ Komutçu & Yetkili Kuralları<small>Yetkili ve komutçu düzeni</small></button>
@@ -488,18 +487,14 @@ body:not(.authenticated) .wrap,body:not(.authenticated) .sidebar,body:not(.authe
   <button class="btn back-home" onclick="openView('forum')">← Foruma dön</button>
   <div id="topicDetail" class="forum-detail"></div>
 </main>
-<main id="profilesView" class="content-view rules-page">
-  <button class="btn back-home" onclick="openView('home')">← Ana sayfaya dön</button>
-  <div class="section-title"><h2>Topluluk Üyeleri</h2><p>Üyelerin profilleri ve forum etkinlikleri</p></div>
-  <div id="profilesList" class="profile-grid"><div class="forum-empty">Üyeler yükleniyor...</div></div>
-</main>
 <main id="profileView" class="content-view rules-page">
-  <button class="btn back-home" onclick="openView('profiles')">← Üyelere dön</button>
+  <button class="btn back-home" onclick="openView('home')">← Üyelere dön</button>
   <div id="profileDetail"></div>
 </main>
 
 </div><div class="toast" id="toast">Kopyalandı!</div>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@5/dist/email.min.js">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@5/dist/email.min.js"></script>
+<script>
 // === FORUM, PROFİL VE GÜVENLİ ROL YÖNETİMİ ===
 const DEFAULT_ROLE = "member";
 const ROLE_LABELS = {admin:"Yönetici", member:"Yeni Üye"};
@@ -612,17 +607,16 @@ async function deleteTopic(id){
   if(error){alert("Konu silinemedi: "+error.message);return;}
   openView("forum");setForumMessage("Konu silindi.");loadForumTopics();
 }
-async function loadProfiles(){
-  const root=document.getElementById("profilesList");if(!root)return;
-  root.innerHTML='<div class="forum-empty">Üyeler yükleniyor...</div>';
-  const {data,error}=await sb.from("profiles").select("id,username,avatar_url,role,created_at").order("created_at",{ascending:false}).limit(200);
-  if(error){root.innerHTML='<div class="forum-empty">Üyeler yüklenemedi. Supabase SQL kurulumunu kontrol et.</div>';return;}
-  root.innerHTML=(data||[]).map(p=>`
-    <article class="profile-card"><img src="${escapeHTML(avatarFor(p))}" alt=""><div class="profile-info">
-      <button class="forum-user-link" onclick="openPublicProfile('${p.id}')">${escapeHTML(profileName(p))}</button>${roleBadge(p.role)}
-      <button class="forum-user-action" onclick="openPublicProfile('${p.id}')">Profili görüntüle</button></div></article>`).join("")||'<div class="forum-empty">Henüz üye yok.</div>';
+
+async function openMyProfile(){
+  if(!currentUser){alert("Profilini görmek için önce giriş yapmalısın.");return;}
+  document.getElementById("profileMenu")?.classList.remove("open");
+  if(!currentProfile){
+    const {data}=await sb.from("profiles").select("id,username,avatar_url,role,created_at").eq("id",currentUser.id).maybeSingle();
+    currentProfile=data||null;
+  }
+  await openPublicProfile(currentUser.id);
 }
-function openMyProfile(){if(!currentUser)return;document.getElementById("profileMenu").classList.remove("open");openPublicProfile(currentUser.id);}
 async function openPublicProfile(id){
   openView("profile");
   const root=document.getElementById("profileDetail");
@@ -714,7 +708,6 @@ function openView(view,btn){
   document.querySelectorAll(".side-link").forEach(x=>x.classList.toggle("active",x.dataset.view===view));
   window.scrollTo({top:0,behavior:"smooth"});
   if(view==="forum") loadForumTopics();
-  if(view==="profiles") loadProfiles();
 }
 function openSection(sectionId){
   closeMenu();
