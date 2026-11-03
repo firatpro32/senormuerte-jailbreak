@@ -220,7 +220,18 @@ body:not(.authenticated) .wrap,body:not(.authenticated) .sidebar,body:not(.authe
 .forum-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#8eabc7;font-size:.82rem}
 .forum-category{display:inline-block;padding:5px 9px;border:1px solid #38bdf855;background:#0b2744;border-radius:999px;color:#7dd3fc;font-size:.75rem}
 .role-badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 9px;font-size:.72rem;font-weight:900;border:1px solid #38bdf866;background:#0b2744;color:#7dd3fc}
-.role-badge.admin{border-color:#facc1588;background:#facc1518;color:#facc15}
+.role-badge.admin,.role-badge.owner{border-color:#facc1588;background:#facc1518;color:#facc15}
+.role-badge.moderator{border-color:#38bdf888;background:#082f49;color:#7dd3fc}
+.role-badge.silver{border-color:#cbd5e188;background:#cbd5e118;color:#e2e8f0}
+.role-badge.gold{border-color:#fbbf2488;background:#78350f33;color:#fbbf24}
+.role-badge.platinum{border-color:#67e8f988;background:#164e6380;color:#a5f3fc}
+.role-badge.diamond{border-color:#a78bfa88;background:#4c1d9580;color:#c4b5fd}
+.role-badge.elite{border-color:#fb718588;background:#88133766;color:#fda4af}
+.profile-badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.profile-special-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid #facc1566;border-radius:999px;background:#facc1512;color:#fde68a;font-size:.72rem;font-weight:800}
+.role-manage-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.role-manage-grid label{display:flex;gap:8px;align-items:center;padding:9px 11px;border:1px solid #285477;border-radius:9px;background:#061426;color:#dceeff;font-size:.86rem}
+@media(max-width:600px){.role-manage-grid{grid-template-columns:1fr}}
 .forum-user-link{border:0;background:none;color:#7dd3fc;font:inherit;font-weight:850;cursor:pointer;padding:0}
 .forum-user-link:hover{text-decoration:underline}
 .forum-empty{padding:28px;text-align:center;border:1px dashed #285477;border-radius:15px;color:#9eb4cc}
@@ -545,12 +556,28 @@ body:not(.authenticated) .wrap,body:not(.authenticated) .sidebar,body:not(.authe
 <script>
 // === FORUM, PROFİL VE GÜVENLİ ROL YÖNETİMİ ===
 const DEFAULT_ROLE = "member";
-const ROLE_LABELS = {admin:"Yönetici", member:"Yeni Üye"};
+const ROLE_LABELS = {
+  member:"Üye", silver:"Silver Üye", gold:"Gold Üye", platinum:"Platinum Üye",
+  diamond:"Diamond Üye", elite:"Elite Üye", moderator:"Moderator",
+  admin:"Admin", owner:"Owner / Kurucu"
+};
+const SPECIAL_BADGES = {
+  founder:"👑 Kurucu", veteran:"🏅 Eski Üye",
+  beta_tester:"🧪 Beta Tester", helper:"🤝 Yardımsever"
+};
+const MEMBER_ROLES = ["member","silver","gold","platinum","diamond","elite"];
+const ADMIN_ASSIGNABLE_ROLES = [...MEMBER_ROLES,"moderator"];
+const OWNER_ASSIGNABLE_ROLES = [...ADMIN_ASSIGNABLE_ROLES,"admin","owner"];
 const FORUM_CATEGORIES = ["CS 1.6 Plugin Sorunları","CS 1.6 Yardım","TeamSpeak 3","Sunucu ve Eklenti Paylaşımı","Genel Sohbet"];
 
+function isStaff(role){ return ["moderator","admin","owner"].includes(role); }
 function roleBadge(role){
-  const safeRole = role === "admin" ? "admin" : "member";
+  const safeRole = Object.prototype.hasOwnProperty.call(ROLE_LABELS,role) ? role : "member";
   return `<span class="role-badge ${safeRole}">${ROLE_LABELS[safeRole]}</span>`;
+}
+function specialBadgesHtml(badges){
+  return (Array.isArray(badges)?badges:[]).filter(key=>SPECIAL_BADGES[key])
+    .map(key=>`<span class="profile-special-badge">${SPECIAL_BADGES[key]}</span>`).join("");
 }
 function formatDate(value){
   try{return new Date(value).toLocaleString("tr-TR",{dateStyle:"medium",timeStyle:"short"});}catch(_){return "";}
@@ -570,7 +597,7 @@ function setForumMessage(message,isError=false){
 async function loadCurrentProfile(){
   if(!currentUser)return;
   try{
-    const {data,error}=await sb.from("profiles").select("id,username,avatar_url,role,created_at").eq("id",currentUser.id).single();
+    const {data,error}=await sb.from("profiles").select("id,username,avatar_url,role,badges,created_at").eq("id",currentUser.id).single();
     if(error)throw error;
     currentProfile=data;
     const label=document.getElementById("navUsername");
@@ -610,7 +637,7 @@ async function createTopic(event){
 async function loadForumTopics(){
   const root=document.getElementById("forumTopics");if(!root)return;
   root.innerHTML='<div class="forum-empty">Konular yükleniyor...</div>';
-  const {data,error}=await sb.from("forum_topics").select("id,title,category,body,author_id,created_at,profiles(username,role)").order("created_at",{ascending:false}).limit(100);
+  const {data,error}=await sb.from("forum_topics").select("id,title,category,body,author_id,created_at,profiles(username,role,badges)").order("created_at",{ascending:false}).limit(100);
   if(error){root.innerHTML='<div class="forum-empty">Forum yüklenemedi. Supabase SQL kurulumunu ve RLS politikalarını kontrol et.</div>';console.error(error);return;}
   if(!data?.length){root.innerHTML='<div class="forum-empty">Henüz konu açılmamış. İlk konuyu sen oluştur!</div>';return;}
   root.innerHTML=data.map(t=>`
@@ -627,9 +654,9 @@ async function openTopic(id){
   openView("topic");
   const root=document.getElementById("topicDetail");
   root.innerHTML='<div class="forum-empty">Konu yükleniyor...</div>';
-  const {data:t,error}=await sb.from("forum_topics").select("id,title,category,body,author_id,created_at,profiles(username,role)").eq("id",id).single();
+  const {data:t,error}=await sb.from("forum_topics").select("id,title,category,body,author_id,created_at,profiles(username,role,badges)").eq("id",id).single();
   if(error){root.innerHTML='<div class="forum-empty">Konu bulunamadı veya erişilemiyor.</div>';return;}
-  const {data:comments,error:commentError}=await sb.from("forum_comments").select("id,body,author_id,created_at,profiles(username,role)").eq("topic_id",id).order("created_at",{ascending:true});
+  const {data:comments,error:commentError}=await sb.from("forum_comments").select("id,body,author_id,created_at,profiles(username,role,badges)").eq("topic_id",id).order("created_at",{ascending:true});
   const commentsHtml=commentError?'<div class="forum-empty">Yorumlar yüklenemedi.</div>':(comments||[]).map(c=>`
     <article class="forum-comment"><div class="forum-meta"><button class="forum-user-link" onclick="openPublicProfile('${c.author_id}')">${escapeHTML(c.profiles?.username||"Üye")}</button>${roleBadge(c.profiles?.role)}<span>${formatDate(c.created_at)}</span></div><p>${escapeHTML(c.body)}</p></article>`).join("")||'<div class="forum-empty">Henüz yorum yok. İlk yorumu sen yaz!</div>';
   root.innerHTML=`
@@ -637,7 +664,7 @@ async function openTopic(id){
       <h2>${escapeHTML(t.title)}</h2><div class="forum-meta">Konu sahibi: <button class="forum-user-link" onclick="openPublicProfile('${t.author_id}')">${escapeHTML(t.profiles?.username||"Üye")}</button>${roleBadge(t.profiles?.role)}</div><p>${escapeHTML(t.body)}</p></article>
     <section><div class="section-title"><h2>Yorumlar</h2><p>${comments?.length||0} yorum</p></div><div class="forum-comments">${commentsHtml}</div></section>
     ${currentUser?`<form class="forum-form" onsubmit="addComment(event)"><h3>Yorum yaz</h3><label class="form-field">Yorumun<textarea name="body" maxlength="4000" required placeholder="Yanıtını yaz..."></textarea></label><button class="btn primary" type="submit">Yorumu gönder</button></form>`:'<div class="form-note">Yorum yazmak için giriş yapmalısın.</div>'}
-    ${currentProfile?.role==="admin"||currentUser?.id===t.author_id?`<button class="btn" onclick="deleteTopic('${t.id}')">Konuyu sil</button>`:""}`;
+    ${isStaff(currentProfile?.role)||currentUser?.id===t.author_id?`<button class="btn" onclick="deleteTopic('${t.id}')">Konuyu sil</button>`:""}`;
 }
 async function addComment(event){
   event.preventDefault();if(!currentUser||!openedTopicId)return;
@@ -660,7 +687,7 @@ async function openMyProfile(){
   if(!currentUser){alert("Profilini görmek için önce giriş yapmalısın.");return;}
   document.getElementById("profileMenu")?.classList.remove("open");
   if(!currentProfile){
-    const {data}=await sb.from("profiles").select("id,username,avatar_url,role,created_at").eq("id",currentUser.id).maybeSingle();
+    const {data}=await sb.from("profiles").select("id,username,avatar_url,role,badges,created_at").eq("id",currentUser.id).maybeSingle();
     currentProfile=data||null;
   }
   await openPublicProfile(currentUser.id);
@@ -669,14 +696,16 @@ async function openPublicProfile(id){
   openView("profile");
   const root=document.getElementById("profileDetail");
   root.innerHTML='<div class="forum-empty">Profil yükleniyor...</div>';
-  const {data:p,error}=await sb.from("profiles").select("id,username,avatar_url,role,created_at").eq("id",id).single();
+  const {data:p,error}=await sb.from("profiles").select("id,username,avatar_url,role,badges,created_at").eq("id",id).single();
   if(error){root.innerHTML='<div class="forum-empty">Profil bulunamadı.</div>';return;}
-  const isAdmin=currentProfile?.role==="admin";
-  const canEdit=isAdmin && p.id!==currentUser?.id;
+  const isOwner=currentProfile?.role==="owner";
+  const canManage=["admin","owner"].includes(currentProfile?.role) && p.id!==currentUser?.id;
+  const assignableRoles=isOwner?OWNER_ASSIGNABLE_ROLES:ADMIN_ASSIGNABLE_ROLES;
   root.innerHTML=`
     <section class="profile-card" style="padding:24px;align-items:center">
       <img src="${escapeHTML(avatarFor(p))}" alt="" style="width:88px;height:88px">
       <div class="profile-info"><h2 style="margin:0">${escapeHTML(profileName(p))}</h2>${roleBadge(p.role)}
+        <div class="profile-badges">${specialBadgesHtml(p.badges)}</div>
         <span class="muted">Üyelik: ${formatDate(p.created_at)}</span></div>
     </section>
     ${currentUser?.id===p.id?`<section class="forum-form" id="profileEditSection">
@@ -689,9 +718,21 @@ async function openPublicProfile(id){
         <button class="btn primary" type="submit" id="saveProfileButton">Kullanıcı adını kaydet</button>
       </form>
     </section>`:""}
-    ${canEdit?`<section class="forum-form"><h3>Yönetici — Üye yetkisini değiştir</h3>
-      <label class="form-field">Yeni yetki<select id="roleSelect" class="role-select"><option value="member" ${p.role==="member"?"selected":""}>Yeni Üye</option><option value="admin" ${p.role==="admin"?"selected":""}>Yönetici</option></select></label>
-      <button class="btn primary" onclick="changeUserRole('${p.id}')">Yetkiyi kaydet</button></section>`:""}
+    ${canManage?`<section class="forum-form">
+      <h3>🛡️ Yönetici Paneli — Üyelik ve rozet yönetimi</h3>
+      <label class="form-field">Üyelik / Yetki
+        <select id="roleSelect" class="role-select">
+          ${assignableRoles.map(role=>`<option value="${role}" ${p.role===role?"selected":""}>${ROLE_LABELS[role]}</option>`).join("")}
+        </select>
+      </label>
+      <div class="form-field"><span>Özel rozetler</span>
+        <div class="role-manage-grid">
+          ${Object.entries(SPECIAL_BADGES).map(([key,label])=>`<label><input type="checkbox" class="special-badge-choice" value="${key}" ${(p.badges||[]).includes(key)?"checked":""}> ${label}</label>`).join("")}
+        </div>
+      </div>
+      <p class="muted">Özel rozetler yalnızca yönetici tarafından verilir. Admin/Owner yetkilerini yalnızca Owner yönetebilir.</p>
+      <button class="btn primary" onclick="changeUserRole('${p.id}')">Yetki ve rozetleri kaydet</button>
+    </section>`:""}
     <section><h3>Forum konuları</h3><div id="userTopics" class="forum-list"><div class="forum-empty">Yükleniyor...</div></div></section>`;
   const {data:topics}=await sb.from("forum_topics").select("id,title,category,created_at").eq("author_id",id).order("created_at",{ascending:false}).limit(30);
   const list=document.getElementById("userTopics");
@@ -716,7 +757,7 @@ async function saveProfileUsername(event){
     if(checkError)throw checkError;
     if(existing?.length)throw new Error("Bu kullanıcı adı zaten kullanılıyor.");
     const {data,error}=await sb.from("profiles").update({username})
-      .eq("id",currentUser.id).select("id,username,avatar_url,role,created_at").single();
+      .eq("id",currentUser.id).select("id,username,avatar_url,role,badges,created_at").single();
     if(error)throw error;
     currentProfile=data;
     const nav=document.getElementById("navUsername");
@@ -733,13 +774,17 @@ async function saveProfileUsername(event){
 }
 
 async function changeUserRole(userId){
-  if(currentProfile?.role!=="admin"){alert("Bu işlem için yönetici yetkisi gerekir.");return;}
+  if(!["admin","owner"].includes(currentProfile?.role)){alert("Bu işlem yalnızca Admin veya Owner tarafından yapılabilir.");return;}
   const role=document.getElementById("roleSelect")?.value;
-  if(!["admin","member"].includes(role))return;
-  if(!confirm("Bu kullanıcının yetkisini "+ROLE_LABELS[role]+" olarak değiştirmek istiyor musun?"))return;
-  const {error}=await sb.rpc("admin_set_user_role",{target_user_id:userId,new_role:role});
-  if(error){alert("Yetki değiştirilemedi: "+error.message);return;}
-  toast("Kullanıcı yetkisi güncellendi.");await openPublicProfile(userId);await loadProfiles();
+  const allowed=currentProfile.role==="owner"?OWNER_ASSIGNABLE_ROLES:ADMIN_ASSIGNABLE_ROLES;
+  if(!allowed.includes(role)){alert("Bu yetkiyi verme iznin yok.");return;}
+  const badges=[...document.querySelectorAll(".special-badge-choice:checked")].map(el=>el.value);
+  if(!confirm("Bu kullanıcının üyeliğini "+ROLE_LABELS[role]+" olarak güncellemek ve özel rozetlerini kaydetmek istiyor musun?"))return;
+  const {error}=await sb.rpc("admin_set_member_status",{target_user_id:userId,new_role:role,new_badges:badges});
+  if(error){alert("Yetki / rozet değiştirilemedi: "+error.message);return;}
+  toast("Üyelik ve özel rozetler güncellendi.");
+  await openPublicProfile(userId);
+  await loadForumTopics();
 }
 
 </script>
@@ -1057,10 +1102,10 @@ async function searchUsers(raw){
   clearTimeout(userSearchTimer);
   userSearchTimer=setTimeout(async()=>{
     try{
-      const {data,error}=await sb.from("profiles").select("id,username,role").ilike("username","%"+query.replace(/[,%_]/g,"\\$&")+"%").order("username").limit(20);
+      const {data,error}=await sb.from("profiles").select("id,username,role,badges").ilike("username","%"+query.replace(/[,%_]/g,"\\$&")+"%").order("username").limit(20);
       if(error)throw error;
       if(!data?.length){box.innerHTML='<div class="empty">Bu isimle eşleşen kullanıcı bulunamadı.</div>';return;}
-      box.innerHTML=data.map(u=>`<button type="button" onclick="openPublicProfile('${u.id}');document.getElementById('userSearchResults').hidden=true"><span>👤</span><span>${escapeHTML(u.username||"Oyuncu")}<small>${u.role==="admin"?"Yönetici":"Yeni Üye"}</small></span></button>`).join("");
+      box.innerHTML=data.map(u=>`<button type="button" onclick="openPublicProfile('${u.id}');document.getElementById('userSearchResults').hidden=true"><span>👤</span><span>${escapeHTML(u.username||"Oyuncu")}<small>${ROLE_LABELS[u.role]||"Üye"} ${(u.badges||[]).length?"• Özel rozetli":""}</small></span></button>`).join("");
     }catch(e){console.error("Kullanıcı arama:",e);box.innerHTML='<div class="empty">Arama yapılamadı. Supabase profil izinlerini kontrol et.</div>';}
   },250);
 }
