@@ -236,6 +236,7 @@ body:not(.authenticated) .wrap,body:not(.authenticated) .sidebar,body:not(.authe
       <button class="btn primary auth-submit" id="authSubmit" type="submit">Giriş Yap</button>
     </form>
     <p id="authMessage" class="auth-message" role="status"></p>
+    <button id="resendConfirmBtn" class="btn auth-submit" type="button" onclick="resendConfirmation()" hidden style="margin-top:10px">Doğrulama bağlantısını tekrar gönder</button>
     <p class="auth-privacy">Devam ederek SeñorMuerte topluluğuna giriş yaparsın.</p>
   </div>
 </div>
@@ -569,12 +570,40 @@ function setAuthMode(mode){
   document.getElementById("authPassword").autocomplete = registering ? "new-password" : "current-password";
   document.getElementById("authSubmit").textContent = registering ? "Hesap Oluştur" : "Giriş Yap";
   setAuthMessage("");
+  document.getElementById("resendConfirmBtn").hidden = true;
 }
 
 function setAuthMessage(message, isError=false){
   const el = document.getElementById("authMessage");
   el.textContent = message;
   el.classList.toggle("error", isError);
+}
+
+async function resendConfirmation(){
+  const email = document.getElementById("authEmail").value.trim();
+  const btn = document.getElementById("resendConfirmBtn");
+  if(!email){
+    setAuthMessage("Önce e-posta adresini yaz.", true);
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = "Gönderiliyor...";
+  try{
+    const {error} = await sb.auth.resend({
+      type: "signup",
+      email,
+      options: {
+        emailRedirectTo: "https://firatpro32.github.io/senormuerte-jailbreak/"
+      }
+    });
+    if(error) throw error;
+    setAuthMessage("Doğrulama bağlantısı tekrar gönderildi. Gelen kutunu ve spam klasörünü kontrol et.");
+  }catch(error){
+    setAuthMessage("Bağlantı gönderilemedi: " + (error.message || "Bir hata oluştu. Biraz bekleyip tekrar dene."), true);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = "Doğrulama bağlantısını tekrar gönder";
+  }
 }
 
 function showAuth(){
@@ -622,7 +651,9 @@ async function handleAuth(event){
         showApp(data.user);
       }else{
         setAuthMode("login");
-        setAuthMessage("Kayıt başarılı! E-posta adresine gelen doğrulama bağlantısına tıkla. Doğruladıktan sonra giriş yapabilirsin.");
+        document.getElementById("authEmail").value = email;
+        document.getElementById("resendConfirmBtn").hidden = false;
+        setAuthMessage("Kayıt isteği alındı. E-postandaki doğrulama bağlantısına tıkla. Gelmediyse aşağıdaki butonla tekrar isteyebilirsin.");
       }
     }else{
       const {data,error} = await sb.auth.signInWithPassword({email,password});
