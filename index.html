@@ -186,9 +186,60 @@ body{
 @media(max-width:700px){.auth-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.splash-inner,.splash-crown,.splash-line{animation:none}.splash-screen{transition:none}}
 
+
+/* Supabase üyelik ve profil arayüzü */
+.auth-screen{position:fixed;inset:0;z-index:3000;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 0%,#123b65 0%,#061326 55%,#020611 100%);overflow:auto}
+.auth-screen[hidden]{display:none}
+.auth-box{width:min(460px,100%);padding:clamp(22px,5vw,38px);border:1px solid #38bdf877;border-radius:22px;background:linear-gradient(145deg,#102b49f5,#071426f5);box-shadow:0 20px 70px #0009,0 0 35px #0284c733;text-align:center}
+.auth-crown{font-size:2.5rem;color:#facc15;text-shadow:0 0 22px #facc15;margin-bottom:8px}
+.auth-logo{font-size:clamp(1.8rem,7vw,2.7rem);font-weight:1000;letter-spacing:2px;text-shadow:0 0 20px #0284c7}
+.auth-logo span{color:#38bdf8}.auth-subtitle{font-size:.7rem;letter-spacing:4px;color:#a9c9e5;margin:9px 0 24px}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.auth-tab{padding:11px;border-radius:10px;border:1px solid #285477;background:#061426;color:#a9c4dc;font-weight:800;cursor:pointer}
+.auth-tab.active{background:#12365a;color:white;border-color:#38bdf8}
+.auth-box .form-field{text-align:left}.auth-submit{width:100%;margin-top:8px}
+.auth-message{min-height:22px;margin:14px 0 0;color:#7dd3fc;font-size:.88rem;line-height:1.5}
+.auth-message.error{color:#fca5a5}.auth-privacy{font-size:.75rem;color:#7896b3;margin:12px 0 0}
+.nav-account{position:relative;margin-left:auto;margin-right:12px}
+.profile-trigger{display:flex;align-items:center;gap:9px;border:1px solid #285477;background:#09182a;color:#eaf5ff;padding:7px 11px;border-radius:999px;font-weight:800;cursor:pointer}
+.profile-trigger img{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#163653;border:1px solid #38bdf8}
+.profile-menu{display:none;position:absolute;right:0;top:calc(100% + 10px);z-index:50;width:205px;padding:12px;border:1px solid #285477;border-radius:14px;background:#08182b;box-shadow:0 15px 40px #0009}
+.profile-menu.open{display:grid;gap:9px}.profile-menu-head{font-size:.68rem;letter-spacing:2px;color:#7dd3fc;font-weight:900;padding:3px 5px}
+.avatar-upload,.profile-action{display:block;text-align:center;padding:11px;border:1px solid #285477;border-radius:9px;background:#10243d;color:#eaf5ff;font-weight:750;cursor:pointer;font-size:.85rem}
+.avatar-upload input{display:none}.profile-action{width:100%}
+body:not(.authenticated) .wrap,body:not(.authenticated) .sidebar,body:not(.authenticated) .sidebar-backdrop,body:not(.authenticated) .light-overlay,body:not(.authenticated) .toast{visibility:hidden!important;pointer-events:none!important}
+@media(max-width:760px){.nav-account{margin-left:auto;margin-right:8px}.profile-trigger{padding:6px 8px;font-size:.8rem}.profile-trigger img{width:25px;height:25px}}
+
 </style>
 </head>
 <body>
+
+<div id="authScreen" class="auth-screen">
+  <div class="auth-box">
+    <div class="auth-crown">♛</div>
+    <div class="auth-logo">SEÑOR<span>MUERTE</span></div>
+    <p class="auth-subtitle">JAILBREAK COMMUNITY</p>
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab active" id="loginTab" onclick="setAuthMode('login')">Giriş Yap</button>
+      <button type="button" class="auth-tab" id="registerTab" onclick="setAuthMode('register')">Kayıt Ol</button>
+    </div>
+    <form id="authForm" onsubmit="handleAuth(event)">
+      <label class="form-field" id="usernameField" hidden>Kullanıcı adı
+        <input id="authUsername" type="text" maxlength="24" autocomplete="username" placeholder="Oyundaki kullanıcı adın">
+      </label>
+      <label class="form-field">E-posta
+        <input id="authEmail" type="email" autocomplete="email" required placeholder="ornek@mail.com">
+      </label>
+      <label class="form-field">Şifre
+        <input id="authPassword" type="password" minlength="6" autocomplete="current-password" required placeholder="En az 6 karakter">
+      </label>
+      <button class="btn primary auth-submit" id="authSubmit" type="submit">Giriş Yap</button>
+    </form>
+    <p id="authMessage" class="auth-message" role="status"></p>
+    <p class="auth-privacy">Devam ederek SeñorMuerte topluluğuna giriş yaparsın.</p>
+  </div>
+</div>
+
 <div class="splash-screen" id="splashScreen" aria-label="SeñorMuerte karşılama ekranı">
   <div class="splash-inner">
     <div class="splash-crown">♛</div>
@@ -213,7 +264,7 @@ body{
   <button class="side-link" onclick="openSection('contact')">✉ İletişim<small>Topluluğa ulaş</small></button>
 </aside>
 <div class="wrap">
-<nav><a class="brand" href="#" onclick="openView('home');return false">SEÑOR<span>MUERTE</span></a><div class="links"><a href="#server">Sunucu</a><a href="#contact">İletişim</a></div><button class="menu-toggle" onclick="toggleMenu()">☰ Menü</button></nav>
+<nav><a class="brand" href="#" onclick="openView('home');return false">SEÑOR<span>MUERTE</span></a><div class="links"><a href="#server">Sunucu</a><a href="#contact">İletişim</a></div><div class="nav-account"><button class="profile-trigger" type="button" onclick="toggleProfileMenu()"><img id="navAvatar" alt="Avatar"><span id="navUsername">Hesabım</span> ▾</button><div class="profile-menu" id="profileMenu"><div class="profile-menu-head">HESABIN</div><label class="avatar-upload">📷 Avatar değiştir<input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadAvatar(event)"></label><button type="button" class="profile-action" onclick="signOutUser()">Çıkış Yap</button></div></div><button class="menu-toggle" onclick="toggleMenu()">☰ Menü</button></nav>
 <div id="homeView" class="content-view active">
 <header class="hero">
 <div class="eyebrow">CS 1.6 • JailBreak • Community</div>
@@ -378,6 +429,8 @@ body{
   <div class="rules" id="admins"></div>
 </main>
 </div><div class="toast" id="toast">Kopyalandı!</div>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@5/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const playerRules=[
 "Cvar ayarları ile oynamak kesinlikle yasaktır!",
@@ -451,34 +504,33 @@ window.showStoreMessage = function(item){
   window.alert("Bu yetkiyi satın almak için TeamSpeak 3 adresimize gelip SeñorMuerte ile görüşebilirsin.");
 };
 
+// EmailJS ayarları: Panelinden aldığın 3 değeri buraya ekle.
+const EMAILJS_PUBLIC_KEY = "uDlRANZdAP3NggXJa";
+const EMAILJS_SERVICE_ID = "service_4dpol0r";
+const EMAILJS_TEMPLATE_ID = "template_4apwchb";
+
 async function submitSupport(event){
   event.preventDefault();
   const form = event.currentTarget;
   const button = document.getElementById("supportSubmit");
-  const data = new FormData(form);
-  const payload = {
-    _subject: "SeñorMuerte - " + data.get("kind"),
-    _template: "table",
-    konu: data.get("kind"),
-    oyuncu: data.get("nickname"),
-    aciklama: data.get("message")
-  };
+
+  if (!window.emailjs || EMAILJS_PUBLIC_KEY === "PUBLIC_KEY_BURAYA" ||
+      EMAILJS_SERVICE_ID === "SERVICE_ID_BURAYA" || EMAILJS_TEMPLATE_ID === "TEMPLATE_ID_BURAYA") {
+    alert("Şikayet formu henüz e-posta servisine bağlanmadı. EmailJS ayarları tamamlanmalı.");
+    return;
+  }
+
   button.disabled = true;
   button.textContent = "Gönderiliyor...";
   try {
-    const response = await fetch("https://formsubmit.co/ajax/firatbey333@gmail.com", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify(payload)
+    await emailjs.sendForm(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, form, {
+      publicKey: EMAILJS_PUBLIC_KEY
     });
-    const result = await response.json();
-    if (!response.ok || String(result.success) !== "true") {
-      throw new Error(result.message || "E-posta gönderilemedi.");
-    }
     toast("Mesajın başarıyla gönderildi!");
     form.reset();
   } catch (error) {
-    alert("Mesaj gönderilemedi. İnternet bağlantını kontrol et veya siteyi yayınlandığı adres üzerinden tekrar dene.\\n\\n" + error.message);
+    console.error("EmailJS gönderim hatası:", error);
+    alert("Mesaj gönderilemedi. Biraz sonra tekrar dene.\n\n" + (error.text || error.message || "Bilinmeyen hata"));
   } finally {
     button.disabled = false;
     button.textContent = "Mesajı gönder";
@@ -493,7 +545,155 @@ window.addEventListener("load",()=>{
 document.getElementById("year").textContent=new Date().getFullYear();renderRules("playersRules",playerRules);renderRules("admins",adminRules);
 // GitHub Pages is static. Live server data requires a CORS-enabled API/proxy.
 // This avoids showing fake player/map numbers as if they were real.
-document.getElementById("statusLabel").textContent="Canlı API gerekli";
-document.getElementById("statusNote").textContent="OyunYöneticisi sayfası bağlantısı hazır. Oyuncu sayısı, maksimum oyuncu, harita ve aktiflik değerlerini otomatik doldurmak için CORS izinli bir API veya küçük PHP proxy gerekir. GitHub Pages PHP çalıştırmaz; API adresi sağlandığında bu alanlar gerçek verilerle bağlanabilir.";
+const statusLabel=document.getElementById("statusLabel");
+const statusNote=document.getElementById("statusNote");
+if(statusLabel) statusLabel.textContent="Canlı API gerekli";
+if(statusNote) statusNote.textContent="Canlı sunucu verileri için CORS izinli bir API gerekir.";
+
+// === SUPABASE ÜYELİK SİSTEMİ ===
+// Publishable/anon anahtarı tarayıcıda kullanılabilir. Service role anahtarını ASLA buraya koyma.
+const SUPABASE_URL = "https://hrjzuytzqcihltdtmgkw.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_2YLPkjl5UZ52MF7-lioPIw_LVqi53X7";
+const AVATAR_BUCKET = "profile-avatars";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let authMode = "login";
+let currentUser = null;
+
+function setAuthMode(mode){
+  authMode = mode;
+  const registering = mode === "register";
+  document.getElementById("loginTab").classList.toggle("active", !registering);
+  document.getElementById("registerTab").classList.toggle("active", registering);
+  document.getElementById("usernameField").hidden = !registering;
+  document.getElementById("authUsername").required = registering;
+  document.getElementById("authPassword").autocomplete = registering ? "new-password" : "current-password";
+  document.getElementById("authSubmit").textContent = registering ? "Hesap Oluştur" : "Giriş Yap";
+  setAuthMessage("");
+}
+
+function setAuthMessage(message, isError=false){
+  const el = document.getElementById("authMessage");
+  el.textContent = message;
+  el.classList.toggle("error", isError);
+}
+
+function showAuth(){
+  document.body.classList.remove("authenticated");
+  document.getElementById("authScreen").hidden = false;
+  document.getElementById("splashScreen")?.classList.add("hide");
+}
+
+function showApp(user){
+  currentUser = user;
+  document.body.classList.add("authenticated");
+  document.getElementById("authScreen").hidden = true;
+  const metadata = user.user_metadata || {};
+  const username = metadata.username || (user.email ? user.email.split("@")[0] : "Oyuncu");
+  document.getElementById("navUsername").textContent = username;
+  const avatar = document.getElementById("navAvatar");
+  avatar.src = metadata.avatar_url || makeDefaultAvatar(username);
+  avatar.onerror = () => { avatar.src = makeDefaultAvatar(username); };
+}
+
+function makeDefaultAvatar(username){
+  const letter = (username || "S").trim().charAt(0).toUpperCase() || "S";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="100%" height="100%" rx="48" fill="#12365a"/><text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="48" font-weight="bold" fill="#7dd3fc">${letter.replace(/[<>&"]/g,"")}</text></svg>`;
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
+async function handleAuth(event){
+  event.preventDefault();
+  const submit = document.getElementById("authSubmit");
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  const username = document.getElementById("authUsername").value.trim();
+  submit.disabled = true;
+  submit.textContent = "İşleniyor...";
+  setAuthMessage("");
+  try{
+    if(authMode === "register"){
+      if(username.length < 3) throw new Error("Kullanıcı adı en az 3 karakter olmalı.");
+      const {data,error} = await sb.auth.signUp({
+        email, password,
+        options:{data:{username}}
+      });
+      if(error) throw error;
+      if(data.session){
+        showApp(data.user);
+      }else{
+        setAuthMode("login");
+        setAuthMessage("Kayıt başarılı! E-posta adresine gelen doğrulama bağlantısına tıkla. Doğruladıktan sonra giriş yapabilirsin.");
+      }
+    }else{
+      const {data,error} = await sb.auth.signInWithPassword({email,password});
+      if(error) throw error;
+      showApp(data.user);
+    }
+  }catch(error){
+    setAuthMessage(error.message || "Bir hata oluştu. Tekrar dene.", true);
+  }finally{
+    submit.disabled = false;
+    submit.textContent = authMode === "register" ? "Hesap Oluştur" : "Giriş Yap";
+  }
+}
+
+function toggleProfileMenu(){
+  document.getElementById("profileMenu").classList.toggle("open");
+}
+async function signOutUser(){
+  const {error} = await sb.auth.signOut();
+  document.getElementById("profileMenu").classList.remove("open");
+  if(error){ alert("Çıkış yapılamadı: " + error.message); return; }
+  currentUser = null;
+  showAuth();
+}
+async function uploadAvatar(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file || !currentUser) return;
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type)){
+    alert("Lütfen JPG, PNG veya WEBP formatında bir görsel seç.");
+    event.target.value = "";
+    return;
+  }
+  if(file.size > 2 * 1024 * 1024){
+    alert("Avatar en fazla 2 MB olabilir.");
+    event.target.value = "";
+    return;
+  }
+  try{
+    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+    const path = `${currentUser.id}/avatar.${ext}`;
+    const {error:uploadError} = await sb.storage.from(AVATAR_BUCKET).upload(path,file,{upsert:true,contentType:file.type});
+    if(uploadError) throw uploadError;
+    const {data} = sb.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+    const avatarUrl = data.publicUrl + "?v=" + Date.now();
+    const {data:updateData,error:updateError} = await sb.auth.updateUser({data:{...currentUser.user_metadata,avatar_url:avatarUrl}});
+    if(updateError) throw updateError;
+    showApp(updateData.user);
+    toast("Avatar başarıyla güncellendi!");
+  }catch(error){
+    alert("Avatar yüklenemedi: " + (error.message || "Bilinmeyen hata") + "\nSupabase Storage bucket ve politikalarını kontrol et.");
+  }finally{
+    event.target.value = "";
+  }
+}
+
+document.addEventListener("click", (event)=>{
+  const menu = document.getElementById("profileMenu");
+  if(menu && !menu.contains(event.target) && !event.target.closest(".profile-trigger")) menu.classList.remove("open");
+});
+
+// İlk açılışta oturum kontrolü: oturum yoksa sayfa içeriği gösterilmez.
+(async function initializeMembership(){
+  showAuth();
+  const {data,error} = await sb.auth.getSession();
+  if(error){ setAuthMessage("Oturum kontrol edilemedi: " + error.message, true); return; }
+  if(data.session) showApp(data.session.user);
+  sb.auth.onAuthStateChange((_event,session)=>{
+    if(session) showApp(session.user);
+    else showAuth();
+  });
+})();
+
 </script>
 </body></html>
