@@ -867,7 +867,10 @@ async function handleAuth(event){
       if(username.length < 3) throw new Error("Kullanıcı adı en az 3 karakter olmalı.");
       const {data,error} = await sb.auth.signUp({
         email, password,
-        options:{data:{username}}
+        options:{
+          data:{username},
+          emailRedirectTo:"https://firatpro32.github.io/senormuerte-jailbreak/"
+        }
       });
       if(error) throw error;
       if(data.session){
