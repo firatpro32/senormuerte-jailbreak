@@ -679,6 +679,16 @@ async function openPublicProfile(id){
       <div class="profile-info"><h2 style="margin:0">${escapeHTML(profileName(p))}</h2>${roleBadge(p.role)}
         <span class="muted">Üyelik: ${formatDate(p.created_at)}</span></div>
     </section>
+    ${currentUser?.id===p.id?`<section class="forum-form" id="profileEditSection">
+      <h3>Profil düzenle</h3>
+      <form onsubmit="saveProfileUsername(event)">
+        <label class="form-field">Kullanıcı adı
+          <input id="profileUsernameInput" name="username" type="text" minlength="3" maxlength="24" required value="${escapeHTML(p.username||"")}" autocomplete="nickname" placeholder="Yeni kullanıcı adın">
+        </label>
+        <p class="muted">3-24 karakter. Başka bir üyenin kullandığı ad seçilemez.</p>
+        <button class="btn primary" type="submit" id="saveProfileButton">Kullanıcı adını kaydet</button>
+      </form>
+    </section>`:""}
     ${canEdit?`<section class="forum-form"><h3>Yönetici — Üye yetkisini değiştir</h3>
       <label class="form-field">Yeni yetki<select id="roleSelect" class="role-select"><option value="member" ${p.role==="member"?"selected":""}>Yeni Üye</option><option value="admin" ${p.role==="admin"?"selected":""}>Yönetici</option></select></label>
       <button class="btn primary" onclick="changeUserRole('${p.id}')">Yetkiyi kaydet</button></section>`:""}
@@ -687,6 +697,41 @@ async function openPublicProfile(id){
   const list=document.getElementById("userTopics");
   if(list)list.innerHTML=(topics||[]).map(t=>`<article class="forum-topic"><div class="forum-meta"><span class="forum-category">${escapeHTML(t.category)}</span><span>${formatDate(t.created_at)}</span></div><h3><button class="forum-user-link" onclick="openTopic('${t.id}')">${escapeHTML(t.title)}</button></h3></article>`).join("")||'<div class="forum-empty">Bu üye henüz konu açmamış.</div>';
 }
+async function saveProfileUsername(event){
+  event.preventDefault();
+  if(!currentUser){alert("Kullanıcı adını değiştirmek için giriş yapmalısın.");return;}
+  const input=document.getElementById("profileUsernameInput");
+  const button=document.getElementById("saveProfileButton");
+  const username=String(input?.value||"").trim();
+  if(username.length<3||username.length>24){
+    alert("Kullanıcı adı 3-24 karakter arasında olmalı.");return;
+  }
+  if(!/^[\\p{L}\\p{N}_. -]+$/u.test(username)){
+    alert("Kullanıcı adında yalnızca harf, rakam, boşluk, nokta, tire ve alt çizgi kullanabilirsin.");return;
+  }
+  button.disabled=true;button.textContent="Kaydediliyor...";
+  try{
+    const {data:existing,error:checkError}=await sb.from("profiles")
+      .select("id").ilike("username",username).neq("id",currentUser.id).limit(1);
+    if(checkError)throw checkError;
+    if(existing?.length)throw new Error("Bu kullanıcı adı zaten kullanılıyor.");
+    const {data,error}=await sb.from("profiles").update({username})
+      .eq("id",currentUser.id).select("id,username,avatar_url,role,created_at").single();
+    if(error)throw error;
+    currentProfile=data;
+    const nav=document.getElementById("navUsername");
+    if(nav)nav.textContent=username;
+    await openPublicProfile(currentUser.id);
+    if(typeof loadForumTopics==="function")await loadForumTopics();
+    toast("Kullanıcı adın güncellendi. Sitede yeni adın görünecek.");
+  }catch(error){
+    console.error("Kullanıcı adı güncelleme:",error);
+    alert("Kullanıcı adı değiştirilemedi: "+(error.message||"Bir hata oluştu."));
+  }finally{
+    button.disabled=false;button.textContent="Kullanıcı adını kaydet";
+  }
+}
+
 async function changeUserRole(userId){
   if(currentProfile?.role!=="admin"){alert("Bu işlem için yönetici yetkisi gerekir.");return;}
   const role=document.getElementById("roleSelect")?.value;
