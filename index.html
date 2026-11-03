@@ -11,7 +11,7 @@
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(ellipse at 20% 0%,#12365a 0,transparent 38%),radial-gradient(ellipse at 90% 25%,#102b52 0,transparent 35%),linear-gradient(135deg,#030712,#071426 55%,#050b16);min-height:100vh}
 body:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(transparent 97%,rgba(56,189,248,.035) 100%);background-size:100% 5px;z-index:-1}
 a{color:inherit;text-decoration:none}.wrap{width:min(1120px,92%);margin:auto}
-nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid var(--line)}.brand{font-weight:900;letter-spacing:1px;font-size:1.1rem}.brand span{color:var(--blue)}nav .links{display:flex;gap:22px;color:var(--muted);font-size:.92rem}nav .links a:hover{color:white}
+.user-search{position:relative;width:min(260px,25vw);margin-left:auto;margin-right:14px}.user-search input{width:100%;padding:10px 13px;border:1px solid #285477;border-radius:10px;background:#09182a;color:#eaf5ff;outline:none}.user-search-results{position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:80;max-height:320px;overflow:auto;background:#08182b;border:1px solid #285477;border-radius:12px;box-shadow:0 15px 40px #0009}.user-search-results button{display:flex;width:100%;align-items:center;gap:9px;padding:11px 13px;border:0;border-bottom:1px solid #18344e;background:transparent;color:#eaf5ff;text-align:left;cursor:pointer}.user-search-results button:hover{background:#12304c}.user-search-results small{display:block;color:#9eb4cc}.user-search-results .empty{padding:12px;color:#9eb4cc;font-size:.85rem}@media(max-width:760px){.user-search{order:3;width:100%;margin:12px 0}.wrap nav{flex-wrap:wrap}.user-search input{box-sizing:border-box}}\nnav{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid var(--line)}.brand{font-weight:900;letter-spacing:1px;font-size:1.1rem}.brand span{color:var(--blue)}nav .links{display:flex;gap:22px;color:var(--muted);font-size:.92rem}nav .links a:hover{color:white}
 .menu-toggle{display:none;border:1px solid var(--line);background:#0b1c31;color:var(--text);padding:10px 13px;border-radius:10px;font-weight:800;cursor:pointer}
 .sidebar-backdrop{position:fixed;inset:0;background:#0009;z-index:20;opacity:0;visibility:hidden;transition:.25s}
 .sidebar{position:fixed;z-index:21;left:0;top:0;bottom:0;width:min(310px,86vw);padding:26px 20px;background:linear-gradient(180deg,#0b1d33,#050d1a);border-right:1px solid #245078;box-shadow:18px 0 55px #0008;transform:translateX(-105%);transition:transform .28s ease;display:flex;flex-direction:column;gap:12px}
@@ -293,7 +293,7 @@ body:not(.authenticated) .wrap,body:not(.authenticated) .sidebar,body:not(.authe
   <button class="side-link" onclick="openSection('contact')">✉ İletişim<small>Topluluğa ulaş</small></button>
 </aside>
 <div class="wrap">
-<nav><a class="brand" href="#" onclick="openView('home');return false">SEÑOR<span>MUERTE</span></a><div class="links"><a href="#server">Sunucu</a><a href="#contact">İletişim</a></div><div class="nav-account"><button class="profile-trigger" type="button" onclick="toggleProfileMenu()"><img id="navAvatar" alt="Avatar"><span id="navUsername">Hesabım</span> ▾</button><div class="profile-menu" id="profileMenu"><div class="profile-menu-head">HESABIN</div><button type="button" class="profile-action" onclick="openMyProfile()">Profilim</button><label class="avatar-upload">📷 Avatar değiştir<input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadAvatar(event)"></label><button type="button" class="profile-action" onclick="signOutUser()">Çıkış Yap</button></div></div><button class="menu-toggle" onclick="toggleMenu()">☰ Menü</button></nav>
+<nav><a class="brand" href="#" onclick="openView('home');return false">SEÑOR<span>MUERTE</span></a><div class="links"><a href="#server">Sunucu</a><a href="#contact">İletişim</a></div><div class="user-search"><input id="userSearchInput" type="search" placeholder="Kullanıcı ara..." autocomplete="off" oninput="searchUsers(this.value)" aria-label="Kullanıcı ara"><div id="userSearchResults" class="user-search-results" hidden></div></div><div class="nav-account"><button class="profile-trigger" type="button" onclick="toggleProfileMenu()"><img id="navAvatar" alt="Avatar"><span id="navUsername">Hesabım</span> ▾</button><div class="profile-menu" id="profileMenu"><div class="profile-menu-head">HESABIN</div><button type="button" class="profile-action" onclick="openMyProfile()">Profilim</button><label class="avatar-upload">📷 Avatar değiştir<input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadAvatar(event)"></label><button type="button" class="profile-action" onclick="signOutUser()">Çıkış Yap</button></div></div><button class="menu-toggle" onclick="toggleMenu()">☰ Menü</button></nav>
 <div id="homeView" class="content-view active">
 <header class="hero">
 <div class="eyebrow">CS 1.6 • JailBreak • Community</div>
@@ -952,5 +952,25 @@ document.addEventListener("click", (event)=>{
   });
 })();
 
+
+let userSearchTimer=null;
+async function searchUsers(raw){
+  const box=document.getElementById("userSearchResults");
+  const query=String(raw||"").trim();
+  if(!box)return;
+  if(query.length<2){box.hidden=true;box.innerHTML="";return;}
+  if(!currentUser){box.hidden=false;box.innerHTML='<div class="empty">Kullanıcı aramak için giriş yapmalısın.</div>';return;}
+  box.hidden=false;box.innerHTML='<div class="empty">Aranıyor...</div>';
+  clearTimeout(userSearchTimer);
+  userSearchTimer=setTimeout(async()=>{
+    try{
+      const {data,error}=await sb.from("profiles").select("id,username,role").ilike("username","%"+query.replace(/[,%_]/g,"\\$&")+"%").order("username").limit(20);
+      if(error)throw error;
+      if(!data?.length){box.innerHTML='<div class="empty">Bu isimle eşleşen kullanıcı bulunamadı.</div>';return;}
+      box.innerHTML=data.map(u=>`<button type="button" onclick="openPublicProfile('${u.id}');document.getElementById('userSearchResults').hidden=true"><span>👤</span><span>${escapeHTML(u.username||"Oyuncu")}<small>${u.role==="admin"?"Yönetici":"Yeni Üye"}</small></span></button>`).join("");
+    }catch(e){console.error("Kullanıcı arama:",e);box.innerHTML='<div class="empty">Arama yapılamadı. Supabase profil izinlerini kontrol et.</div>';}
+  },250);
+}
+document.addEventListener("click",e=>{const box=document.getElementById("userSearchResults");if(box&&!e.target.closest(".user-search"))box.hidden=true;});
 </script>
 </body></html>
