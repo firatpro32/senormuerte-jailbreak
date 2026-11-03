@@ -210,6 +210,33 @@ body{
 body:not(.authenticated) .wrap,body:not(.authenticated) .sidebar,body:not(.authenticated) .sidebar-backdrop,body:not(.authenticated) .light-overlay,body:not(.authenticated) .toast{visibility:hidden!important;pointer-events:none!important}
 @media(max-width:760px){.nav-account{margin-left:auto;margin-right:8px}.profile-trigger{padding:6px 8px;font-size:.8rem}.profile-trigger img{width:25px;height:25px}}
 
+
+/* === FORUM VE ROL SİSTEMİ === */
+.forum-toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:18px 0}
+.forum-list{display:grid;gap:13px}
+.forum-topic,.forum-comment,.profile-card{background:linear-gradient(145deg,rgba(14,39,67,.96),rgba(5,15,30,.96));border:1px solid rgba(56,189,248,.3);border-radius:15px;padding:18px}
+.forum-topic h3{margin:0 0 9px;color:#eaf6ff}
+.forum-topic p,.forum-comment p{color:#c1d7eb;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.forum-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#8eabc7;font-size:.82rem}
+.forum-category{display:inline-block;padding:5px 9px;border:1px solid #38bdf855;background:#0b2744;border-radius:999px;color:#7dd3fc;font-size:.75rem}
+.role-badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 9px;font-size:.72rem;font-weight:900;border:1px solid #38bdf866;background:#0b2744;color:#7dd3fc}
+.role-badge.admin{border-color:#facc1588;background:#facc1518;color:#facc15}
+.forum-user-link{border:0;background:none;color:#7dd3fc;font:inherit;font-weight:850;cursor:pointer;padding:0}
+.forum-user-link:hover{text-decoration:underline}
+.forum-empty{padding:28px;text-align:center;border:1px dashed #285477;border-radius:15px;color:#9eb4cc}
+.forum-detail{display:grid;gap:15px}
+.forum-comments{display:grid;gap:10px;margin-top:14px}
+.forum-comment{padding:14px}
+.forum-comment .forum-meta{margin-bottom:8px}
+.forum-form{max-width:850px;margin:20px auto;background:linear-gradient(145deg,#102b49,#071426);border:1px solid #38bdf866;border-radius:18px;padding:22px}
+.profile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:18px}
+.profile-card{display:flex;gap:13px;align-items:center}
+.profile-card img{width:54px;height:54px;border-radius:50%;object-fit:cover;border:1px solid #38bdf8}
+.profile-card .profile-info{min-width:0;display:grid;gap:7px}
+.role-select{background:#061426;color:#eaf5ff;border:1px solid #285477;border-radius:9px;padding:8px}
+.forum-user-action{background:#10243d;border:1px solid #285477;color:#eaf5ff;border-radius:9px;padding:7px 10px;cursor:pointer}
+@media(max-width:700px){.forum-form{padding:16px}.forum-topic,.forum-comment{padding:14px}}
+
 </style>
 </head>
 <body>
@@ -259,13 +286,15 @@ body:not(.authenticated) .wrap,body:not(.authenticated) .sidebar,body:not(.authe
   <button class="side-link" data-view="prices" onclick="openView('prices',this)">◆ Yetki Fiyatları<small>Yetki paketleri ve özellikleri</small></button>
   <button class="side-link" data-view="store" onclick="openView('store',this)">🛒 Mağaza<small>Yetki ve coin paketleri</small></button>
   <button class="side-link" data-view="support" onclick="openView('support',this)">✉ Şikayet & Öneri<small>Görüşlerini bize ilet</small></button>
+  <button class="side-link" data-view="forum" onclick="openView('forum',this)">▤ Forum<small>Konular, sorular ve yorumlar</small></button>
+  <button class="side-link" data-view="profiles" onclick="openView('profiles',this)">♙ Üyeler<small>Topluluk üyelerini görüntüle</small></button>
   <button class="side-link" onclick="openSection('server')">▣ Sunucu Bilgileri<small>Sunucu IP'si ve canlı durum</small></button>
   <button class="side-link" data-view="players" onclick="openView('players',this)">⚖ Oyuncu Kuralları<small>Oyuncuların uyması gereken kurallar</small></button>
   <button class="side-link" data-view="admins" onclick="openView('admins',this)">★ Komutçu & Yetkili Kuralları<small>Yetkili ve komutçu düzeni</small></button>
   <button class="side-link" onclick="openSection('contact')">✉ İletişim<small>Topluluğa ulaş</small></button>
 </aside>
 <div class="wrap">
-<nav><a class="brand" href="#" onclick="openView('home');return false">SEÑOR<span>MUERTE</span></a><div class="links"><a href="#server">Sunucu</a><a href="#contact">İletişim</a></div><div class="nav-account"><button class="profile-trigger" type="button" onclick="toggleProfileMenu()"><img id="navAvatar" alt="Avatar"><span id="navUsername">Hesabım</span> ▾</button><div class="profile-menu" id="profileMenu"><div class="profile-menu-head">HESABIN</div><label class="avatar-upload">📷 Avatar değiştir<input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadAvatar(event)"></label><button type="button" class="profile-action" onclick="signOutUser()">Çıkış Yap</button></div></div><button class="menu-toggle" onclick="toggleMenu()">☰ Menü</button></nav>
+<nav><a class="brand" href="#" onclick="openView('home');return false">SEÑOR<span>MUERTE</span></a><div class="links"><a href="#server">Sunucu</a><a href="#contact">İletişim</a></div><div class="nav-account"><button class="profile-trigger" type="button" onclick="toggleProfileMenu()"><img id="navAvatar" alt="Avatar"><span id="navUsername">Hesabım</span> ▾</button><div class="profile-menu" id="profileMenu"><div class="profile-menu-head">HESABIN</div><button type="button" class="profile-action" onclick="openMyProfile()">Profilim</button><label class="avatar-upload">📷 Avatar değiştir<input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadAvatar(event)"></label><button type="button" class="profile-action" onclick="signOutUser()">Çıkış Yap</button></div></div><button class="menu-toggle" onclick="toggleMenu()">☰ Menü</button></nav>
 <div id="homeView" class="content-view active">
 <header class="hero">
 <div class="eyebrow">CS 1.6 • JailBreak • Community</div>
@@ -429,8 +458,204 @@ body:not(.authenticated) .wrap,body:not(.authenticated) .sidebar,body:not(.authe
   <div class="section-title"><h2>Komutçu & Yetkili Kuralları</h2><p>Yetkili ekibinin uyması gereken kurallar</p></div>
   <div class="rules" id="admins"></div>
 </main>
+
+<main id="forumView" class="content-view rules-page">
+  <button class="btn back-home" onclick="openView('home')">← Ana sayfaya dön</button>
+  <div class="section-title"><h2>Topluluk Forumu</h2><p>Sorularını paylaş, çözümlere birlikte ulaşalım</p></div>
+  <div class="forum-toolbar">
+    <div class="muted">CS 1.6, plugin, TeamSpeak 3 ve topluluk konuları</div>
+    <button class="btn primary" type="button" onclick="showTopicForm()">＋ Forum Oluştur</button>
+  </div>
+  <div id="topicFormWrap" hidden>
+    <form class="forum-form" id="topicForm" onsubmit="createTopic(event)">
+      <h3>Yeni forum konusu</h3>
+      <label class="form-field">Konu başlığı<input name="title" maxlength="120" required placeholder="Örn. CS 1.6 plugin çalışmıyor"></label>
+      <label class="form-field">Kategori
+        <select name="category" required>
+          <option value="">Kategori seç</option>
+          <option>CS 1.6 Plugin Sorunları</option><option>CS 1.6 Yardım</option>
+          <option>TeamSpeak 3</option><option>Sunucu ve Eklenti Paylaşımı</option><option>Genel Sohbet</option>
+        </select>
+      </label>
+      <label class="form-field">Açıklama<textarea name="body" maxlength="8000" required placeholder="Sorunu veya paylaşmak istediğin konuyu detaylıca anlat..."></textarea></label>
+      <div class="actions"><button class="btn primary" type="submit" id="topicSubmit">Konuyu yayınla</button><button class="btn" type="button" onclick="hideTopicForm()">Vazgeç</button></div>
+    </form>
+  </div>
+  <div id="forumMessage" class="status-note" role="status"></div>
+  <div id="forumTopics" class="forum-list"><div class="forum-empty">Forum yükleniyor...</div></div>
+</main>
+<main id="topicView" class="content-view rules-page">
+  <button class="btn back-home" onclick="openView('forum')">← Foruma dön</button>
+  <div id="topicDetail" class="forum-detail"></div>
+</main>
+<main id="profilesView" class="content-view rules-page">
+  <button class="btn back-home" onclick="openView('home')">← Ana sayfaya dön</button>
+  <div class="section-title"><h2>Topluluk Üyeleri</h2><p>Üyelerin profilleri ve forum etkinlikleri</p></div>
+  <div id="profilesList" class="profile-grid"><div class="forum-empty">Üyeler yükleniyor...</div></div>
+</main>
+<main id="profileView" class="content-view rules-page">
+  <button class="btn back-home" onclick="openView('profiles')">← Üyelere dön</button>
+  <div id="profileDetail"></div>
+</main>
+
 </div><div class="toast" id="toast">Kopyalandı!</div>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@5/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@5/dist/email.min.js">
+// === FORUM, PROFİL VE GÜVENLİ ROL YÖNETİMİ ===
+const DEFAULT_ROLE = "member";
+const ROLE_LABELS = {admin:"Yönetici", member:"Yeni Üye"};
+const FORUM_CATEGORIES = ["CS 1.6 Plugin Sorunları","CS 1.6 Yardım","TeamSpeak 3","Sunucu ve Eklenti Paylaşımı","Genel Sohbet"];
+
+function roleBadge(role){
+  const safeRole = role === "admin" ? "admin" : "member";
+  return `<span class="role-badge ${safeRole}">${ROLE_LABELS[safeRole]}</span>`;
+}
+function formatDate(value){
+  try{return new Date(value).toLocaleString("tr-TR",{dateStyle:"medium",timeStyle:"short"});}catch(_){return "";}
+}
+function profileName(profile){
+  return profile?.username || "Oyuncu";
+}
+function avatarFor(profile){
+  return profile?.avatar_url || makeDefaultAvatar(profileName(profile));
+}
+function setForumMessage(message,isError=false){
+  const el=document.getElementById("forumMessage");
+  if(!el)return;
+  el.textContent=message||"";
+  el.style.color=isError?"#fca5a5":"#7dd3fc";
+}
+async function loadCurrentProfile(){
+  if(!currentUser)return;
+  try{
+    const {data,error}=await sb.from("profiles").select("id,username,avatar_url,role,created_at").eq("id",currentUser.id).single();
+    if(error)throw error;
+    currentProfile=data;
+    const label=document.getElementById("navUsername");
+    if(label)label.textContent=profileName(data);
+  }catch(error){
+    console.error("Profil yükleme:",error);
+    currentProfile={id:currentUser.id,username:currentUser.user_metadata?.username||"Oyuncu",avatar_url:currentUser.user_metadata?.avatar_url||null,role:"member"};
+  }
+}
+function showTopicForm(){
+  if(!currentUser){alert("Forum kullanmak için giriş yapmalısın.");return;}
+  document.getElementById("topicFormWrap").hidden=false;
+  document.getElementById("topicFormWrap").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function hideTopicForm(){
+  document.getElementById("topicFormWrap").hidden=true;
+  document.getElementById("topicForm")?.reset();
+}
+async function createTopic(event){
+  event.preventDefault();
+  if(!currentUser){alert("Oturumun sona ermiş. Tekrar giriş yap.");return;}
+  const form=event.currentTarget, button=document.getElementById("topicSubmit");
+  const values=Object.fromEntries(new FormData(form).entries());
+  button.disabled=true;button.textContent="Yayınlanıyor...";
+  try{
+    const {error}=await sb.from("forum_topics").insert({
+      author_id:currentUser.id,title:String(values.title||"").trim(),
+      category:values.category,body:String(values.body||"").trim()
+    });
+    if(error)throw error;
+    hideTopicForm();setForumMessage("Konun başarıyla yayınlandı.");
+    await loadForumTopics();
+  }catch(error){
+    console.error(error);setForumMessage("Konu yayınlanamadı: "+(error.message||"Bir hata oluştu."),true);
+  }finally{button.disabled=false;button.textContent="Konuyu yayınla";}
+}
+async function loadForumTopics(){
+  const root=document.getElementById("forumTopics");if(!root)return;
+  root.innerHTML='<div class="forum-empty">Konular yükleniyor...</div>';
+  const {data,error}=await sb.from("forum_topics").select("id,title,category,body,author_id,created_at,profiles(username,role)").order("created_at",{ascending:false}).limit(100);
+  if(error){root.innerHTML='<div class="forum-empty">Forum yüklenemedi. Supabase SQL kurulumunu ve RLS politikalarını kontrol et.</div>';console.error(error);return;}
+  if(!data?.length){root.innerHTML='<div class="forum-empty">Henüz konu açılmamış. İlk konuyu sen oluştur!</div>';return;}
+  root.innerHTML=data.map(t=>`
+    <article class="forum-topic">
+      <div class="forum-meta"><span class="forum-category">${escapeHTML(t.category)}</span><span>${formatDate(t.created_at)}</span></div>
+      <h3 style="margin-top:12px"><button class="forum-user-link" onclick="openTopic('${t.id}')">${escapeHTML(t.title)}</button></h3>
+      <p>${escapeHTML(t.body.length>220?t.body.slice(0,220)+"…":t.body)}</p>
+      <div class="forum-meta">Açan: <button class="forum-user-link" onclick="openPublicProfile('${t.author_id}')">${escapeHTML(t.profiles?.username||"Silinmiş kullanıcı")}</button> ${roleBadge(t.profiles?.role)}</div>
+      <div class="actions"><button class="btn" onclick="openTopic('${t.id}')">Konuyu ve yorumları gör</button></div>
+    </article>`).join("");
+}
+async function openTopic(id){
+  openedTopicId=id;
+  openView("topic");
+  const root=document.getElementById("topicDetail");
+  root.innerHTML='<div class="forum-empty">Konu yükleniyor...</div>';
+  const {data:t,error}=await sb.from("forum_topics").select("id,title,category,body,author_id,created_at,profiles(username,role)").eq("id",id).single();
+  if(error){root.innerHTML='<div class="forum-empty">Konu bulunamadı veya erişilemiyor.</div>';return;}
+  const {data:comments,error:commentError}=await sb.from("forum_comments").select("id,body,author_id,created_at,profiles(username,role)").eq("topic_id",id).order("created_at",{ascending:true});
+  const commentsHtml=commentError?'<div class="forum-empty">Yorumlar yüklenemedi.</div>':(comments||[]).map(c=>`
+    <article class="forum-comment"><div class="forum-meta"><button class="forum-user-link" onclick="openPublicProfile('${c.author_id}')">${escapeHTML(c.profiles?.username||"Üye")}</button>${roleBadge(c.profiles?.role)}<span>${formatDate(c.created_at)}</span></div><p>${escapeHTML(c.body)}</p></article>`).join("")||'<div class="forum-empty">Henüz yorum yok. İlk yorumu sen yaz!</div>';
+  root.innerHTML=`
+    <article class="forum-topic"><div class="forum-meta"><span class="forum-category">${escapeHTML(t.category)}</span><span>${formatDate(t.created_at)}</span></div>
+      <h2>${escapeHTML(t.title)}</h2><div class="forum-meta">Konu sahibi: <button class="forum-user-link" onclick="openPublicProfile('${t.author_id}')">${escapeHTML(t.profiles?.username||"Üye")}</button>${roleBadge(t.profiles?.role)}</div><p>${escapeHTML(t.body)}</p></article>
+    <section><div class="section-title"><h2>Yorumlar</h2><p>${comments?.length||0} yorum</p></div><div class="forum-comments">${commentsHtml}</div></section>
+    ${currentUser?`<form class="forum-form" onsubmit="addComment(event)"><h3>Yorum yaz</h3><label class="form-field">Yorumun<textarea name="body" maxlength="4000" required placeholder="Yanıtını yaz..."></textarea></label><button class="btn primary" type="submit">Yorumu gönder</button></form>`:'<div class="form-note">Yorum yazmak için giriş yapmalısın.</div>'}
+    ${currentProfile?.role==="admin"||currentUser?.id===t.author_id?`<button class="btn" onclick="deleteTopic('${t.id}')">Konuyu sil</button>`:""}`;
+}
+async function addComment(event){
+  event.preventDefault();if(!currentUser||!openedTopicId)return;
+  const body=String(new FormData(event.currentTarget).get("body")||"").trim();if(!body)return;
+  const button=event.currentTarget.querySelector("button[type=submit]");button.disabled=true;
+  try{
+    const {error}=await sb.from("forum_comments").insert({topic_id:openedTopicId,author_id:currentUser.id,body});
+    if(error)throw error;await openTopic(openedTopicId);
+  }catch(error){alert("Yorum gönderilemedi: "+error.message);}
+  finally{button.disabled=false;}
+}
+async function deleteTopic(id){
+  if(!confirm("Bu forum konusunu ve yorumlarını silmek istiyor musun?"))return;
+  const {error}=await sb.from("forum_topics").delete().eq("id",id);
+  if(error){alert("Konu silinemedi: "+error.message);return;}
+  openView("forum");setForumMessage("Konu silindi.");loadForumTopics();
+}
+async function loadProfiles(){
+  const root=document.getElementById("profilesList");if(!root)return;
+  root.innerHTML='<div class="forum-empty">Üyeler yükleniyor...</div>';
+  const {data,error}=await sb.from("profiles").select("id,username,avatar_url,role,created_at").order("created_at",{ascending:false}).limit(200);
+  if(error){root.innerHTML='<div class="forum-empty">Üyeler yüklenemedi. Supabase SQL kurulumunu kontrol et.</div>';return;}
+  root.innerHTML=(data||[]).map(p=>`
+    <article class="profile-card"><img src="${escapeHTML(avatarFor(p))}" alt=""><div class="profile-info">
+      <button class="forum-user-link" onclick="openPublicProfile('${p.id}')">${escapeHTML(profileName(p))}</button>${roleBadge(p.role)}
+      <button class="forum-user-action" onclick="openPublicProfile('${p.id}')">Profili görüntüle</button></div></article>`).join("")||'<div class="forum-empty">Henüz üye yok.</div>';
+}
+function openMyProfile(){if(!currentUser)return;document.getElementById("profileMenu").classList.remove("open");openPublicProfile(currentUser.id);}
+async function openPublicProfile(id){
+  openView("profile");
+  const root=document.getElementById("profileDetail");
+  root.innerHTML='<div class="forum-empty">Profil yükleniyor...</div>';
+  const {data:p,error}=await sb.from("profiles").select("id,username,avatar_url,role,created_at").eq("id",id).single();
+  if(error){root.innerHTML='<div class="forum-empty">Profil bulunamadı.</div>';return;}
+  const isAdmin=currentProfile?.role==="admin";
+  const canEdit=isAdmin && p.id!==currentUser?.id;
+  root.innerHTML=`
+    <section class="profile-card" style="padding:24px;align-items:center">
+      <img src="${escapeHTML(avatarFor(p))}" alt="" style="width:88px;height:88px">
+      <div class="profile-info"><h2 style="margin:0">${escapeHTML(profileName(p))}</h2>${roleBadge(p.role)}
+        <span class="muted">Üyelik: ${formatDate(p.created_at)}</span></div>
+    </section>
+    ${canEdit?`<section class="forum-form"><h3>Yönetici — Üye yetkisini değiştir</h3>
+      <label class="form-field">Yeni yetki<select id="roleSelect" class="role-select"><option value="member" ${p.role==="member"?"selected":""}>Yeni Üye</option><option value="admin" ${p.role==="admin"?"selected":""}>Yönetici</option></select></label>
+      <button class="btn primary" onclick="changeUserRole('${p.id}')">Yetkiyi kaydet</button></section>`:""}
+    <section><h3>Forum konuları</h3><div id="userTopics" class="forum-list"><div class="forum-empty">Yükleniyor...</div></div></section>`;
+  const {data:topics}=await sb.from("forum_topics").select("id,title,category,created_at").eq("author_id",id).order("created_at",{ascending:false}).limit(30);
+  const list=document.getElementById("userTopics");
+  if(list)list.innerHTML=(topics||[]).map(t=>`<article class="forum-topic"><div class="forum-meta"><span class="forum-category">${escapeHTML(t.category)}</span><span>${formatDate(t.created_at)}</span></div><h3><button class="forum-user-link" onclick="openTopic('${t.id}')">${escapeHTML(t.title)}</button></h3></article>`).join("")||'<div class="forum-empty">Bu üye henüz konu açmamış.</div>';
+}
+async function changeUserRole(userId){
+  if(currentProfile?.role!=="admin"){alert("Bu işlem için yönetici yetkisi gerekir.");return;}
+  const role=document.getElementById("roleSelect")?.value;
+  if(!["admin","member"].includes(role))return;
+  if(!confirm("Bu kullanıcının yetkisini "+ROLE_LABELS[role]+" olarak değiştirmek istiyor musun?"))return;
+  const {error}=await sb.rpc("admin_set_user_role",{target_user_id:userId,new_role:role});
+  if(error){alert("Yetki değiştirilemedi: "+error.message);return;}
+  toast("Kullanıcı yetkisi güncellendi.");await openPublicProfile(userId);await loadProfiles();
+}
+
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const playerRules=[
@@ -488,6 +713,8 @@ function openView(view,btn){
   if(target) target.classList.add("active");
   document.querySelectorAll(".side-link").forEach(x=>x.classList.toggle("active",x.dataset.view===view));
   window.scrollTo({top:0,behavior:"smooth"});
+  if(view==="forum") loadForumTopics();
+  if(view==="profiles") loadProfiles();
 }
 function openSection(sectionId){
   closeMenu();
@@ -559,6 +786,8 @@ const AVATAR_BUCKET = "profile-avatars";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 let authMode = "login";
 let currentUser = null;
+let currentProfile = null;
+let openedTopicId = null;
 
 function setAuthMode(mode){
   authMode = mode;
@@ -612,7 +841,7 @@ function showAuth(){
   document.getElementById("splashScreen")?.classList.add("hide");
 }
 
-function showApp(user){
+async function showApp(user){
   currentUser = user;
   document.body.classList.add("authenticated");
   document.getElementById("authScreen").hidden = true;
@@ -622,6 +851,7 @@ function showApp(user){
   const avatar = document.getElementById("navAvatar");
   avatar.src = metadata.avatar_url || makeDefaultAvatar(username);
   avatar.onerror = () => { avatar.src = makeDefaultAvatar(username); };
+  await loadCurrentProfile();
 }
 
 function makeDefaultAvatar(username){
