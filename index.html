@@ -706,7 +706,7 @@ async function saveProfileUsername(event){
   if(username.length<3||username.length>24){
     alert("Kullanıcı adı 3-24 karakter arasında olmalı.");return;
   }
-  if(!/^[\\p{L}\\p{N}_. -]+$/u.test(username)){
+  if(!/^[\p{L}\p{N}_. -]+$/u.test(username)){
     alert("Kullanıcı adında yalnızca harf, rakam, boşluk, nokta, tire ve alt çizgi kullanabilirsin.");return;
   }
   button.disabled=true;button.textContent="Kaydediliyor...";
